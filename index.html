@@ -1,0 +1,479 @@
+﻿<html>
+<script type="text/javascript">
+var arraysize=30;
+var outter=[];
+var inner=[];
+var startpoints=3;
+var allStartpoints=[];
+var density=3;//wie viel blockiert ist
+var size;
+var intervalTime=1000;
+var endpoint=Math.round(Math.floor(Math.random()*(arraysize-1+1)+2));
+var current=[];
+var currentNumber;
+var found=false;
+function generate(){
+	outter=[];
+	//remove old table from html dom
+	var element = document.getElementById("mytable");
+	if(element!=null){
+		element.remove();
+		element.innerHTML='';
+	}
+	//get parameters
+	arraysize=parseInt(document.getElementsByName("size")[0].value);
+	startpoints=parseInt(document.getElementsByName("points")[0].value);
+	allStartpoints=[];
+	endpoint=Math.round(Math.round(Math.random()*(arraysize-3)+2));
+	density=parseInt(document.getElementsByName("density")[0].value);
+	wantedSolvablePoints=parseInt(document.getElementsByName("solvpoints")[0].value);
+	if(wantedSolvablePoints>startpoints ){
+		wantedSolvablePoints=startpoints;
+	}
+	//create starting points
+	for(var i=1; i<=startpoints; i++){
+		var min = arraysize/startpoints*i-1;
+		var max = arraysize/startpoints*i;
+		if(min==0){min=2}
+		
+		allStartpoints.push(Math.round(Math.random()*(max-min+1)+min));
+	}
+	//create actual field
+	//
+	for(var i =1; i<=arraysize; i++){
+		inner=[];//the array inside the array (columns in the row)
+		for(var k =1; k<=arraysize; k++){
+			if(k==1 && allStartpoints.indexOf(i)>-1){//if current cordinate is startpoint
+				inner.push('start');
+			}else if(k==arraysize && endpoint==i){//endpoint/target
+				inner.push('end');
+			}else if(i==1 || i== arraysize || k==arraysize ||k==1){//or is part of the border of the labyrinth
+				inner.push('block');
+			}else{
+				if(Math.random()*10>density){
+					inner.push('leer');
+				}else{
+					inner.push('block');
+				}
+				
+			}
+		}
+		outter.push(inner);//put  colums into rows
+	}
+	
+	outercells=createHTMLTableFromArray(outter);//outercells beinhaltet die html elemente/objekte
+	var solvablePoints=0;
+	var l=0;
+	while(l<=allStartpoints.length-1 && wantedSolvablePoints>solvablePoints){
+		if(solvePoint(l)){
+			solvablePoints++;
+		}
+		l++;
+		original=outter;
+		ResetLabyrinth(original);
+	}
+	/*
+	allStartpoints.forEach(function(startpoint){
+		//draw(outercells);
+		if(wantedSolvablePoints>=solvablePoints){
+			break;
+		}
+		if(solvePoint(l)){
+			solvablePoints++;
+		}
+		i++;
+		l++;
+		original=outter;
+		draw(original);
+		
+	});
+	*/
+	if(solvablePoints<wantedSolvablePoints){
+		console.log('generating new (solvalepoints='+solvablePoints+') wanted= '+wantedSolvablePoints+' ');
+		generate();
+		
+	}
+	ArrayToConsole(outter);
+	size='random';
+}
+function ArrayToConsole( input){
+	output='['
+	var k=0;
+	input.forEach(function(ebene1){
+		if(k==0){
+			output=output+'[';
+		}else{
+			output=output+',[';
+		}
+		
+		var i=0;
+		ebene1.forEach(function(ebene2){
+			if(i==0){
+				output=output+"'"+ebene2+"'";
+			}else{
+				output=output+','+"'"+ebene2+"'";
+			}
+			
+			i++;
+		});
+		k++;
+		output=output+']';
+	});
+	output=output+'];';
+	console.log(output);
+}
+function generateSaved(sizeg){
+	bigField=[['block','block','block','block','block','block','block','block','block','block','block','block','block','block','block','block','block','block','block','block','block','block','block','block','block','block','block','block','block','block'],['block','block','leer','leer','leer','leer','leer','leer','block','leer','leer','leer','leer','leer','block','leer','leer','block','leer','leer','leer','leer','leer','block','leer','leer','block','leer','leer','block'],['block','leer','leer','leer','leer','block','block','block','block','block','leer','leer','block','leer','block','block','block','block','leer','leer','block','leer','leer','leer','block','leer','block','leer','block','block'],['block','leer','block','block','leer','leer','leer','block','block','leer','leer','block','leer','leer','leer','block','block','leer','block','block','leer','leer','block','leer','leer','block','block','leer','leer','block'],['block','leer','block','leer','leer','leer','block','block','leer','block','leer','block','leer','leer','block','leer','leer','block','leer','leer','block','leer','block','block','block','leer','leer','leer','leer','block'],['block','leer','leer','leer','block','leer','block','leer','leer','leer','block','block','leer','leer','leer','leer','leer','leer','leer','block','block','block','leer','leer','leer','leer','leer','block','leer','block'],['start','leer','leer','leer','leer','block','block','block','leer','leer','leer','block','leer','block','block','block','leer','leer','block','leer','block','leer','leer','block','leer','block','leer','leer','leer','block'],['block','leer','leer','leer','leer','leer','leer','block','block','leer','block','leer','leer','leer','leer','leer','leer','leer','leer','leer','leer','leer','leer','block','leer','leer','leer','block','block','block'],['block','leer','block','leer','leer','leer','leer','leer','leer','block','leer','block','leer','leer','leer','leer','block','block','leer','leer','leer','leer','leer','leer','leer','leer','block','leer','block','block'],['block','leer','leer','leer','leer','leer','leer','leer','leer','leer','leer','leer','leer','leer','leer','leer','block','block','leer','leer','leer','leer','leer','leer','block','leer','leer','block','leer','block'],['block','leer','leer','leer','leer','leer','leer','leer','leer','leer','leer','leer','leer','leer','leer','leer','block','leer','leer','leer','leer','block','leer','leer','leer','leer','leer','leer','leer','block'],['block','leer','block','leer','leer','block','leer','block','leer','leer','leer','leer','leer','block','leer','leer','block','leer','leer','block','leer','block','block','block','block','leer','leer','block','leer','block'],['block','leer','leer','block','block','leer','block','leer','block','leer','leer','leer','block','block','leer','leer','leer','leer','leer','block','leer','block','leer','leer','block','leer','leer','leer','leer','block'],['block','leer','leer','leer','block','leer','leer','leer','leer','leer','leer','leer','block','leer','block','block','block','leer','block','block','leer','leer','block','leer','block','block','block','block','leer','block'],['start','leer','leer','leer','leer','block','leer','leer','leer','leer','leer','leer','leer','block','leer','leer','block','leer','leer','leer','block','leer','leer','leer','block','leer','leer','leer','leer','block'],['block','leer','leer','leer','leer','block','leer','leer','leer','leer','leer','leer','leer','leer','leer','block','block','block','block','leer','leer','leer','leer','leer','block','block','block','leer','block','block'],['block','leer','leer','block','block','leer','leer','block','leer','leer','block','block','leer','leer','leer','block','block','block','block','block','leer','leer','leer','block','block','leer','leer','leer','leer','end'],['block','block','block','leer','block','leer','block','leer','block','leer','leer','leer','block','block','leer','leer','leer','leer','leer','leer','leer','leer','leer','leer','block','block','leer','leer','leer','block'],['block','leer','leer','leer','leer','block','block','block','leer','block','block','block','block','block','block','leer','leer','block','leer','block','block','leer','block','leer','leer','leer','leer','leer','block','block'],['block','leer','leer','block','leer','leer','leer','leer','leer','leer','leer','block','block','leer','leer','leer','leer','leer','leer','leer','block','leer','leer','block','block','block','block','leer','block','block'],['block','leer','block','block','leer','leer','block','leer','leer','block','leer','leer','leer','block','leer','leer','block','leer','block','block','leer','block','block','leer','leer','block','block','block','leer','block'],['start','leer','leer','leer','block','leer','block','leer','block','leer','leer','block','leer','leer','leer','leer','leer','block','leer','leer','block','block','leer','block','leer','leer','block','leer','leer','block'],['block','block','block','leer','leer','block','leer','leer','leer','block','leer','leer','block','leer','block','leer','leer','leer','leer','block','leer','leer','leer','leer','leer','leer','block','block','leer','block'],['block','block','leer','leer','block','leer','leer','leer','leer','leer','leer','block','leer','block','leer','leer','leer','leer','leer','leer','leer','leer','block','leer','leer','block','leer','leer','leer','block'],['block','leer','leer','leer','leer','block','leer','leer','leer','leer','leer','leer','block','leer','block','block','leer','leer','leer','leer','leer','block','block','leer','leer','leer','block','leer','leer','block'],['block','leer','leer','leer','block','block','block','leer','block','block','leer','leer','leer','block','leer','block','block','leer','leer','block','leer','block','leer','leer','block','leer','leer','leer','leer','block'],['block','leer','leer','leer','leer','leer','leer','leer','leer','block','block','block','leer','leer','leer','leer','leer','block','block','leer','leer','leer','leer','block','leer','leer','leer','leer','leer','block'],['block','leer','block','leer','block','leer','leer','block','block','leer','leer','leer','leer','block','leer','leer','leer','leer','block','leer','leer','block','leer','leer','leer','block','block','leer','leer','block'],['block','leer','leer','leer','leer','leer','leer','leer','leer','leer','block','block','block','block','block','block','block','leer','leer','block','leer','block','leer','leer','leer','leer','block','block','block','block'],['block','block','block','block','block','block','block','block','block','block','block','block','block','block','block','block','block','block','block','block','block','block','block','block','block','block','block','block','block','block']];
+	smallField=[['block','block','block','block','block','block','block','block','block','block','block','block','block','block','block'],['block','leer','block','block','leer','leer','leer','leer','block','block','block','leer','block','leer','block'],['block','leer','block','leer','leer','leer','block','leer','leer','block','leer','leer','leer','leer','block'],['start','leer','block','leer','leer','leer','leer','block','leer','leer','leer','leer','block','leer','block'],['block','leer','block','block','leer','leer','leer','leer','block','leer','leer','leer','leer','leer','block'],['block','leer','leer','block','leer','leer','leer','block','leer','leer','leer','leer','leer','leer','block'],['block','leer','leer','leer','block','leer','leer','leer','leer','block','block','block','leer','leer','block'],['start','leer','block','leer','leer','leer','leer','block','block','leer','leer','leer','leer','leer','block'],['block','leer','block','leer','leer','leer','block','leer','leer','leer','leer','leer','block','leer','block'],['block','leer','leer','leer','leer','block','leer','leer','block','leer','leer','block','leer','leer','end'],['block','leer','block','leer','leer','block','block','leer','leer','leer','leer','leer','leer','block','block'],['start','leer','block','leer','leer','leer','leer','leer','leer','leer','leer','leer','block','leer','block'],['block','leer','leer','leer','leer','leer','leer','leer','leer','leer','block','leer','block','leer','block'],['block','leer','block','leer','block','leer','leer','leer','leer','leer','leer','leer','block','leer','block'],['block','block','block','block','block','block','block','block','block','block','block','block','block','block','block']];
+	if(sizeg=='small'){
+		outter=smallField;
+		arraysize=15;
+		endpoint=10;
+		allStartpoints=[];
+		allStartpoints.push(4);
+		allStartpoints.push(8);
+		allStartpoints.push(12);
+		size='small';
+		intervalTime=1000;
+	}else{
+		outter=bigField;
+		arraysize=30;
+		endpoint=17;
+		allStartpoints=[];
+		allStartpoints.push(7);
+		allStartpoints.push(15);
+		allStartpoints.push(22);
+		size='big';
+	}
+	var element = document.getElementById("mytable");
+	if(element!=null){
+		element.remove();
+		element.innerHTML='';
+	}
+	outercells=createHTMLTableFromArray(outter);
+	
+}
+function createHTMLTableFromArray(input){
+	var table=document.createElement('table');
+	table.id= "mytable";
+	table.name='mytable';
+	table.style.cssText='border-collapse: collapse; '
+	var tablebody=document.createElement('tbody');
+	outercells=[];
+	input.forEach(function(rowdata){
+		var row=document.createElement('tr');
+		innercells=[];
+		rowdata.forEach(function(celldata){
+			
+			var cell=document.createElement('td');
+			cell.style.cssText='border-collapse: collapse; width: 30px; height: 30px; overflow: hidden;'
+			if(celldata=='block'){
+				cell.style.cssText=cell.style.cssText+'background-color:black';
+			}else if(celldata=='start'){
+				cell.style.cssText=cell.style.cssText+'background-color:green; color:green; ';
+			}else if(celldata=='end'){
+				cell.style.cssText=cell.style.cssText+'background-color:red; color:red; ';
+			}else{
+				cell.style.cssText=cell.style.cssText+'background-color:white ; color:white';
+			}
+			innercells.push(cell);
+			
+			cell.appendChild(document.createTextNode(''));
+			row.appendChild(cell);
+		
+		});
+		tablebody.appendChild(row);
+		outercells.push(innercells);
+	});
+	table.appendChild(tablebody);
+	document.body.appendChild(table);
+	return outercells;
+}var original;
+function solveAll(){
+	var i=0;
+	//alert(outercells.length+' '+innercells.length );
+	allStartpoints.forEach(function(startpoint){
+		//draw(outercells);
+		solvePoint(i);
+		i++;
+		
+	});
+}
+function solveAllMulti(slowly){
+	console.log('solving all');
+	var i=0;
+	current=[];
+	currentNumber=0;
+	original=outter;
+	ResetLabyrinth(original);
+	allStartpoints.forEach(function(startpoint){
+		current.push([allStartpoints[i]-1,0]);
+		i++;
+		
+	});
+	found=false;
+	if(slowly==true){
+		var result=false;
+		//restart the processCurrentFields function every -intervalTime- ms
+		var timerId = setInterval(function () {
+		  result=processCurrentFields(slowly);
+		  if(found==true){
+			console.log('stopping interval');
+			clearInterval(timerId);
+			retrackRoute();//when finished, show fastest route
+		  }
+		}, intervalTime);
+	}else{
+		while(!found && current.length>0 && !processCurrentFields(slowly)){
+		
+		}
+		retrackRoute();//when finished, show fastest route
+	}
+	
+	
+	
+	console.log('finished solving all');
+	
+}
+function solvePoint(i){
+	original=outter;
+	ResetLabyrinth(original);
+	currentNumber=0;
+	current=[[allStartpoints[i]-1,0]];
+	found=false;
+	while(!found && current.length>0 && !processCurrentFields()){
+		
+	}
+	return found;
+}
+function retrackRoute(){
+	var route=	findroute(endpoint-1,arraysize-1);//start from the point left of the end
+	console.log('Calculated route:'+route);
+	console.log('coloring route');
+	route.forEach(function(point){
+		outercells[point[0]][point[1]].style.cssText='background-color:blue'
+	});
+	
+}
+function findroute(x,y){//recursivley finds the lowest number neighbor of the given point and returns the path in an array
+	console.log('tracking shortest route');
+	if(original[x][y]==1){//smallest possible number found 
+		ret =[[x,y]];
+		return ret;
+	}
+	console.log('my value is '+original[x][y]+'('+x+''+y+')');
+	var NumbersOfNeighbours=[];
+	//get the numbers of the neighbors
+	if(            x+1<arraysize-1 
+	   && original[x+1][y]!='block' 
+	   && original[x+1][y]!='end' 
+	   && original[x+1][y]!=null
+	  ){
+		console.log('x+1 worked');
+		NumbersOfNeighbours[0]=original[x+1][y];
+	}else{
+		console.log('x+1 is '+original[x+1][y]);
+		NumbersOfNeighbours[0]=999999;
+	}
+	if(            x-1>=0 
+	   && original[x-1][y]!='block' 
+	   && original[x-1][y]!='end'  
+	   && original[x-1][y]!=null){
+		console.log('x-1 worked');
+		NumbersOfNeighbours[1]=(original[x-1][y]);
+	}else{
+		console.log('x-1 is '+original[x-1][y]);
+		NumbersOfNeighbours[1]=999999;
+	}
+	if(y+1<arraysize-1 && original[x][y+1]!='block' && original[x][y+1]!='end' &&original[x][y+1]!=null){
+		console.log('y+1 worked');
+		NumbersOfNeighbours[2]=(original[x][y+1]);
+	}else{
+		console.log('y+1 is '+original[x][y+1]);
+		NumbersOfNeighbours[2]=999999;
+	}
+	if(y-1>=0 
+	   && original[x][y-1]!='block' 
+	   && original[x][y-1]!='end' 
+	   && original[x][y-1]!=null){
+		console.log('y-1 worked');
+		NumbersOfNeighbours[3]=(original[x][y-1]);
+	}else{
+		NumbersOfNeighbours[3]=999999;
+	}
+	// got the numbers of the neighbors
+	var min= Math.min(...NumbersOfNeighbours);
+	var SmallestNeighbourIndex=NumbersOfNeighbours.indexOf(min);//the direction, in which the field lays can be determined by the index
+	
+	console.log('index of nextPoint:'+ SmallestNeighbourIndex);
+	console.log('points:'+ NumbersOfNeighbours);
+	console.log('min:' +min);
+	var returnValue=[];
+	if(SmallestNeighbourIndex==0){
+		returnValue=retrackRouteRec(x+1,y);
+	}else if(SmallestNeighbourIndex==1){
+		returnValue=retrackRouteRec(x-1,y);
+	}else if(SmallestNeighbourIndex==2){
+		returnValue=retrackRouteRec(x,y+1);
+	}else if(SmallestNeighbourIndex==3){
+		returnValue=retrackRouteRec(x,y-1);
+	}
+	returnValue[returnValue.length+1]=[x,y];
+	return returnValue;
+}
+function ResetLabyrinth(input){
+	var i=0;
+	input.forEach(function(x){
+		var k=0;
+		x.forEach(function(y){
+			if(y!=='end' && y!=='start' && y!=='block' ){
+				outercells[i][k].style.cssText='background-color:white ; color:white';
+				outercells[i][k].textContent='';
+				original  [i][k]='leer';
+			}else if(y=='block'){
+				//outercells[i][k].style.cssText='background-color:black ; color:black';
+				//outercells[i][k].textContent=i+''+k;
+			}
+			k++;
+		});
+		i++;
+	});
+	return input;
+}
+function processCurrentFields(slowly){
+	currentNumber=currentNumber+1;
+	var lastFields=current;//create a copy of the array "current", which contains all the newest fields (most recently visited)
+	current=[];		//reset the array to refill it with new fields later
+	lastFields.forEach(function (selectedField){//mark all unmarked neighbors of each field
+		if(selectedField[0]<arraysize && selectedField[1]<arraysize && selectedField[0]>=0 &&selectedField[1]>=0){
+			if(selectedField[0]+1<arraysize && original[selectedField[0]+1][selectedField[1]]=='end'){//if the end was found stop the search
+				found=true;
+				return true;
+			}
+			if(selectedField[0]+1<arraysize && original[selectedField[0]+1][selectedField[1]]=='leer'){
+				
+				current.push([selectedField[0]+1 ,selectedField[1]]);								//push this field into the "current" array for the next iteration
+				original     [selectedField[0]+1][selectedField[1]]=currentNumber;					//write the number into the array
+				outercells   [selectedField[0]+1][selectedField[1]].textContent=currentNumber+'';	//write the number into the html cell
+				outercells   [selectedField[0]+1][selectedField[1]].style.cssText='background-color:white ; color:black';//some css changes
+			}
+			if(selectedField[0]-1>=0 && original[selectedField[0]-1][selectedField[1]]=='end'){//if the end was found stop the search
+					found=true;
+					return true;
+			}
+			if(selectedField[0]-1>=0 && original[selectedField[0]-1][selectedField[1]]=='leer'){
+				
+				current.push([selectedField[0]-1 ,selectedField[1]]);
+				original     [selectedField[0]-1][selectedField[1]]=currentNumber;
+				outercells   [selectedField[0]-1][selectedField[1]].textContent=currentNumber+'';
+				outercells   [selectedField[0]-1][selectedField[1]].style.cssText='background-color:white ; color:black'
+			}
+			if(selectedField[1]+1<arraysize &&original[selectedField[0]][selectedField[1]+1]=='end'){//if the end was found stop the search
+					found=true;
+					return true;
+				}
+			if(selectedField[1]+1<arraysize && original[selectedField[0]][selectedField[1]+1]=='leer'){
+				
+				current.push([selectedField[0] ,selectedField[1]+1]);
+				original     [selectedField[0]][selectedField[1]+1]=currentNumber;
+				outercells   [selectedField[0]][selectedField[1]+1].textContent=currentNumber+'';
+				outercells   [selectedField[0]][selectedField[1]+1].style.cssText='background-color:white ; color:black'
+			}
+			if(selectedField[1]-1>=0 && original[selectedField[0]][selectedField[1]-1]=='end'){//if the end was found stop the search
+					found=true;
+					return true;
+			}
+			if(selectedField[1]-1>=0 && original[selectedField[0]][selectedField[1]-1]=='leer'){
+				current.push([selectedField[0] ,selectedField[1]-1]);
+				original     [selectedField[0]][selectedField[1]-1]=currentNumber;
+				outercells   [selectedField[0]][selectedField[1]-1].textContent=currentNumber+'';
+				outercells   [selectedField[0]][selectedField[1]-1].style.cssText='background-color:white ; color:black'
+			}
+		}
+	});
+	return false;
+}
+/****************************
+Button functions
+*****************************/
+function openOptions(){
+	document.getElementById("options").style.cssText='';
+	document.getElementById("Menu").style.cssText='';
+	document.getElementById("essentials").style.cssText='';
+	document.getElementById("mainMenu").style.cssText='display: none;';
+}
+function small(){//small button
+	console.log('small clicked');
+	document.getElementById("Menu").style.cssText='';
+	document.getElementById("mainMenu").style.cssText='display: none;';
+	document.getElementById("options").style.cssText='display: none;';
+	document.getElementById("essentials").style.cssText='';
+	generateSaved('small');
+}
+function big(){//big button
+	console.log('big clicked');
+	document.getElementById("Menu").style.cssText='';
+	document.getElementById("mainMenu").style.cssText='display: none;';
+	document.getElementById("options").style.cssText='display: none;';
+	document.getElementById("essentials").style.cssText='';
+	
+	generateSaved('big');
+}
+function play(){//playbutton
+	console.log('size of field:'+size);
+	if(size=='small'){
+		intervalTime=1000;
+		console.log('solving slow');
+		solveAllMulti(true);//do it slowly
+	}else if(size=='big'){
+		console.log('solving fast');
+		solveAllMulti(false);
+	}else{
+		if(parseInt(document.getElementsByName("speedid")[0].value)>0){
+			console.log('solving slow');
+			intervalTime=parseInt(document.getElementsByName("speedid")[0].value)*1000;
+			solveAllMulti(true);
+		}else{
+			console.log('solving fast');
+			solveAllMulti(false);
+		}
+		
+	}
+}
+</script>
+<div id="options" style="display: none;">
+
+minimum solvable startpoints<input type="range" id="solvpoints"  name="solvpoints"value="2"  min="0" 	max="10" oninput="Output1.value = solvpoints.value">	<output name="Output1" id="Output1">2</output>  <br>
+Startpoints					<input type="range" id="points" 	 name="points" 	  value="3"  min="1" 	max="10" oninput="Output2.value = points.value">		<output name="Output2" id="Output2">3</output>  <br>
+size						<input type="range" id="sizeid" 	 	 name="size" 	  value="30" min="10"	max="100"oninput="Output3.value = sizeid.value">			<output name="Output3" id="Output3">30</output> <br>
+Density						<input type="range" id="densityid" 	 name="density"   value="3"  min="0"  	max="10" oninput="Output4.value = densityid.value">		<output name="Output4" id="Output4">3</output>  <br>
+Speed						<input type="range" id="speedid" 	 name="speedid"    value="1"  min="0"  	max="5" step="0.1"oninput="Output5.value = speedid.value">		<output name="Output5" id="Output5">1</output>  <br>
+<button onclick="generate()">generate field</button><br>
+Time for generation= minimumSolvablePoints x Size x Density
+</div>
+<div id="essentials" style="display: none;">
+<button onclick="play()">Play</button>
+<button onclick="ResetLabyrinth(original);">back</button><br>
+</div>
+<div id="mainMenu" style="	width: 300px;
+							height: 50px;
+							position: absolute;
+							top:0;
+							bottom: 0;
+							left: 0;
+							right: 0;
+							text-align:center;
+							margin: auto;">
+<button style=""onclick="small()">Small</button>
+<button style=""onclick="big()">Big</button>
+<button style=""onclick="openOptions()">Random</button>
+</div>
+<!--Background-Color: green; border-radius: 50%!-->
+
+
+<div id="Menu" style="display: none;">
+<button onclick="small()">Small</button>
+<button onclick="big()">Big</button>
+<button onclick="openOptions()">Random</button>
+</div>
+</html>
