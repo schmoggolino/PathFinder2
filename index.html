@@ -311,13 +311,13 @@ function findroute(x,y){//recursivley finds the lowest number neighbor of the gi
 	console.log('min:' +min);
 	var returnValue=[];
 	if(SmallestNeighbourIndex==0){
-		returnValue=retrackRouteRec(x+1,y);
+		returnValue=findroute(x+1,y);
 	}else if(SmallestNeighbourIndex==1){
-		returnValue=retrackRouteRec(x-1,y);
+		returnValue=findroute(x-1,y);
 	}else if(SmallestNeighbourIndex==2){
-		returnValue=retrackRouteRec(x,y+1);
+		returnValue=findroute(x,y+1);
 	}else if(SmallestNeighbourIndex==3){
-		returnValue=retrackRouteRec(x,y-1);
+		returnValue=findroute(x,y-1);
 	}
 	returnValue[returnValue.length+1]=[x,y];
 	return returnValue;
@@ -402,6 +402,7 @@ function openOptions(){
 	document.getElementById("Menu").style.cssText='';
 	document.getElementById("essentials").style.cssText='';
 	document.getElementById("mainMenu").style.cssText='display: none;';
+	document.getElementById("timer").style.cssText='';
 }
 function small(){//small button
 	console.log('small clicked');
@@ -409,6 +410,7 @@ function small(){//small button
 	document.getElementById("mainMenu").style.cssText='display: none;';
 	document.getElementById("options").style.cssText='display: none;';
 	document.getElementById("essentials").style.cssText='';
+	document.getElementById("timer").style.cssText='display: none;';
 	generateSaved('small');
 }
 function big(){//big button
@@ -417,10 +419,12 @@ function big(){//big button
 	document.getElementById("mainMenu").style.cssText='display: none;';
 	document.getElementById("options").style.cssText='display: none;';
 	document.getElementById("essentials").style.cssText='';
+	document.getElementById("timer").style.cssText='';
 	
 	generateSaved('big');
 }
 function play(){//playbutton
+	document.getElementById("timer").innerHTML='';
 	console.log('size of field:'+size);
 	if(size=='small'){
 		intervalTime=1000;
@@ -428,7 +432,11 @@ function play(){//playbutton
 		solveAllMulti(true);//do it slowly
 	}else if(size=='big'){
 		console.log('solving fast');
+		var t0 = performance.now();
+		
 		solveAllMulti(false);
+		var t1 = performance.now();
+		document.getElementById("timer").innerHTML='time used: '+ (t1 - t0)+'ms';
 	}else{
 		if(parseInt(document.getElementsByName("speedid")[0].value)>0){
 			console.log('solving slow');
@@ -436,7 +444,10 @@ function play(){//playbutton
 			solveAllMulti(true);
 		}else{
 			console.log('solving fast');
+			var t0 = performance.now();
 			solveAllMulti(false);
+			var t1 = performance.now();
+			document.getElementById("timer").innerHTML='time used: '+ (t1 - t0)+'ms';
 		}
 		
 	}
@@ -451,6 +462,8 @@ Density						<input type="range" id="densityid" 	 name="density"   value="3"  mi
 Speed						<input type="range" id="speedid" 	 name="speedid"    value="1"  min="0"  	max="5" step="0.1"oninput="Output5.value = speedid.value">		<output name="Output5" id="Output5">1</output>  <br>
 <button onclick="generate()">generate field</button><br>
 Time for generation= minimumSolvablePoints x Size x Density
+</div>
+<div id="timer" style="display: none;">
 </div>
 <div id="essentials" style="display: none;">
 <button onclick="play()">Play</button>
