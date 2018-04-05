@@ -270,6 +270,7 @@ function findroute(x,y){//recursivley finds the lowest number neighbor of the gi
 	   && original[x+1][y]!='block' 
 	   && original[x+1][y]!='end' 
 	   && original[x+1][y]!=null
+	   && original[x+1][y]!='leer'
 	  ){
 		console.log('x+1 worked');
 		NumbersOfNeighbours[0]=original[x+1][y];
@@ -280,14 +281,21 @@ function findroute(x,y){//recursivley finds the lowest number neighbor of the gi
 	if(            x-1>=0 
 	   && original[x-1][y]!='block' 
 	   && original[x-1][y]!='end'  
-	   && original[x-1][y]!=null){
+	   && original[x-1][y]!=null
+	   && original[x-1][y]!='leer'
+	   ){
 		console.log('x-1 worked');
 		NumbersOfNeighbours[1]=(original[x-1][y]);
 	}else{
 		console.log('x-1 is '+original[x-1][y]);
 		NumbersOfNeighbours[1]=999999;
 	}
-	if(y+1<arraysize-1 && original[x][y+1]!='block' && original[x][y+1]!='end' &&original[x][y+1]!=null){
+	if(	   y+1<arraysize-1 
+		&& original[x][y+1]!='block' 
+		&& original[x][y+1]!='end' 
+		&&original[x][y+1]!=null
+		&&original[x][y+1]!='leer'
+		){
 		console.log('y+1 worked');
 		NumbersOfNeighbours[2]=(original[x][y+1]);
 	}else{
@@ -297,7 +305,9 @@ function findroute(x,y){//recursivley finds the lowest number neighbor of the gi
 	if(y-1>=0 
 	   && original[x][y-1]!='block' 
 	   && original[x][y-1]!='end' 
-	   && original[x][y-1]!=null){
+	   && original[x][y-1]!=null
+	   && original[x][y-1]!='leer'
+	   ){
 		console.log('y-1 worked');
 		NumbersOfNeighbours[3]=(original[x][y-1]);
 	}else{
@@ -457,7 +467,7 @@ function play(){//playbutton
 		}
 		var t1 = performance.now();
 		alert('time used: '+ (t1 - t0)+'ms');
-		//document.getElementById("timer").innerHTML='time used: '+ (t1 - t0)+'ms';
+		document.getElementById("timer").innerHTML='time used: '+ (t1 - t0)+'ms';
 	}else{
 		if(parseInt(document.getElementsByName("speedid")[0].value)>0){
 			console.log('solving slow');
@@ -472,17 +482,21 @@ function play(){//playbutton
 			console.log('solving fast');
 			var t0 = performance.now();
 			try {
-			solveAllMulti(FALSE);//do it slowly
+			solveAllMulti(false);//do it slowly
 			}
 			catch(err) {
 				alert('An unforseen error has occurred. Try reloading the page '+err.message);
 			}
 			var t1 = performance.now();
 			alert('time used: '+ (t1 - t0)+'ms');
-			//document.getElementById("timer").innerHTML='time used: '+ (t1 - t0)+'ms';
+			document.getElementById("timer").innerHTML='time used: '+ (t1 - t0)+'ms';
 		}
 		
 	}
+}
+function t(){
+generate();
+play();
 }
 </script>
 <div id="options" style="display: none;">
